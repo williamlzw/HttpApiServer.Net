@@ -1,41 +1,35 @@
-using static Vanara.PInvoke.HttpApi;
+using HttpApiHelp;
 using System.Text;
 
 namespace HttpApiTool
 {
     public static class TestHttpApiServer
     {
-        static private HttpApiServer m_server = new HttpApiServer();
-        public static void testHttpApi()
+        static void test_http()
         {
-            if (m_server.Init("MyServer"))
+            HTTPServer server = new HTTPServer();
+            if (server.Init("MyServer", 9000))
             {
                 Console.WriteLine("Init ok");
-                if (m_server.BindHttpPort(8989))
-                {
-                    Console.WriteLine("BindHttpPort ok");
-                    m_server.Subscribe("/", OnProc);
-                    m_server.Start(1);
-                }
+        
+                server.Bind("GET", "/a", OnProc);
+                server.Start(1);
+        
             }
+            Console.ReadLine();
+            server.Stop();
         }
-
-        static public void OnProc(SafeHREQQUEUE ReqQueue, HTTP_REQUEST_V2 request, byte[] data)
+        
+        static public void OnProc(HTTPRequest req, HTTPResponse resp)
         {
-            HttpApiRequest req = new HttpApiRequest();
-            HttpApiResponse resp = new HttpApiResponse();
-            req.Init(request, data, true, true);
-            resp.Init(ReqQueue, request);
-            Console.WriteLine("request path:" + req.GetRequestPath());
-            Console.WriteLine("remote address:" + req.GetRemoteAddress());
-            var postdata = req.GetPostData();
-            Console.WriteLine("postdata len:" + postdata.Length.ToString());
-            var str = Encoding.Default.GetString(postdata);
+            Console.WriteLine("request path:" + req.GetUrl());
+            //Console.WriteLine("remote address:" + req.GetRemoteAddress());
+            //Console.WriteLine("remote port:" + req.GetRemotePort());
+            var str = req.GetBody();
+        
             Console.WriteLine("postdata:" + str);
-            resp.SetCustomResponseHeader("Auth", "william");
-            resp.SetStatusCode(200, "OK");
-            resp.SetContentType("text/html; charset=gb2312");
-            resp.WriteText("OK");
+            resp.SetHeader("Auth", "william");
+            resp.WriteText("我！ok");
         }
     }
 }
